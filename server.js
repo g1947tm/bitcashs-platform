@@ -252,6 +252,7 @@ const UserSchema = new mongoose.Schema({
     required: true
   },
   balance: { type: Number, default: 0.00 },
+  xauBalance: { type: Number, default: 0.00 },
   dailyEarnings: { type: Number, default: 0.00 },
   totalProfit: { type: Number, default: 0.00 },
   activePlans: { type: Array, default: [] },
@@ -264,6 +265,7 @@ const UserSchema = new mongoose.Schema({
     btc: { available: { type: Number, default: 0 }, inOrder: { type: Number, default: 0 } },
     eth: { available: { type: Number, default: 0 }, inOrder: { type: Number, default: 0 } },
     usdt: { available: { type: Number, default: 0 }, inOrder: { type: Number, default: 0 } },
+    xau: { available: { type: Number, default: 0 }, inOrder: { type: Number, default: 0 } },
     sol: { available: { type: Number, default: 0 }, inOrder: { type: Number, default: 0 } },
     xrp: { available: { type: Number, default: 0 }, inOrder: { type: Number, default: 0 } }
   },
@@ -419,6 +421,7 @@ app.get('/', (req, res) => {
 const defaultMarketCache = [
   { sym: 'BTC', name: 'Bitcoin', symbol: 'BTCUSDT', icon: '₿', baseCap: 1240000000000, price: 67420.50, change: 2.45, high: 68100.00, low: 66200.00, volVal: 28400000000 },
   { sym: 'ETH', name: 'Ethereum', symbol: 'ETHUSDT', icon: 'Ξ', baseCap: 225000000000, price: 3512.80, change: 1.82, high: 3580.00, low: 3450.00, volVal: 14200000000 },
+  { sym: 'XAU', name: 'Gold Tether (XAU)', symbol: 'XAUUSDT', icon: '🪙', baseCap: 15000000000000, price: 1.00, change: 0.00, high: 1.00, low: 1.00, volVal: 5000000000 },
   { sym: 'SOL', name: 'Solana', symbol: 'SOLUSDT', icon: '◎', baseCap: 35200000000, price: 148.25, change: -3.12, high: 154.00, low: 145.50, volVal: 3800000000 },
   { sym: 'XRP', name: 'XRP', symbol: 'XRPUSDT', icon: '✕', baseCap: 58100000000, price: 0.6241, change: 0.95, high: 0.6400, low: 0.6120, volVal: 1900000000 },
   { sym: 'DOGE', name: 'Dogecoin', symbol: 'DOGEUSDT', icon: '🐕', baseCap: 10200000000, price: 0.1248, change: -1.45, high: 0.1300, low: 0.1210, volVal: 980000000 },
@@ -459,14 +462,15 @@ fetchLatestBinanceTickers();
 // GET /api/market/prices - Live Prices (resilient with fallback)
 app.get('/api/market/prices', async (req, res) => {
   try {
-    const targets = ['BTCUSDT', 'ETHUSDT', 'SOLUSDT', 'XRPUSDT', 'DOGEUSDT', 'ADAUSDT', 'AVAXUSDT'];
+    const targets = ['BTCUSDT', 'ETHUSDT', 'XAUUSDT', 'SOLUSDT', 'XRPUSDT', 'DOGEUSDT', 'ADAUSDT', 'AVAXUSDT'];
     const formatted = targets.map(sym => {
       const name = sym.replace('USDT', '');
       const t = cachedTickerData[sym];
       const def = defaultMarketCache.find(d => d.symbol === sym) || {};
 
-      const priceVal = t ? parseFloat(t.lastPrice) : (def.price || 100);
-      const changeVal = t ? parseFloat(t.priceChangePercent) : (def.change || 0);
+      // Pinned 1:1 peg for XAU
+      const priceVal = (sym === 'XAUUSDT') ? 1.00 : (t ? parseFloat(t.lastPrice) : (def.price || 100));
+      const changeVal = (sym === 'XAUUSDT') ? 0.00 : (t ? parseFloat(t.priceChangePercent) : (def.change || 0));
       const isUp = changeVal >= 0;
 
       let priceStr = '';
@@ -495,10 +499,10 @@ app.get('/api/market/prices', async (req, res) => {
       name: 'USDT',
       symbol: 'USDT',
       price: '$1.0000',
-      change: '+0.01%',
+      change: '+0.00%',
       up: true,
       rawPrice: 1.0,
-      rawChange: 0.01
+      rawChange: 0.00
     });
 
     res.json({ success: true, data: formatted });
@@ -516,11 +520,13 @@ app.get('/api/markets', async (req, res) => {
 
     const formattedMarkets = defaultMarketCache.map((def, idx) => {
       const t = cachedTickerData[def.symbol];
-      const priceVal = t ? parseFloat(t.lastPrice) : def.price;
-      const changeVal = t ? parseFloat(t.priceChangePercent) : def.change;
-      const highVal = t ? parseFloat(t.highPrice) : (def.high || priceVal * 1.02);
-      const lowVal = t ? parseFloat(t.lowPrice) : (def.low || priceVal * 0.98);
-      const volVal = t ? parseFloat(t.quoteVolume) : def.volVal;
+      // Locked 1:1 peg for XAU to USDT ($1.00)
+      const isXau = def.sym === 'XAU' || def.symbol === 'XAUUSDT';
+      const priceVal = isXau ? 1.00 : (t ? parseFloat(t.lastPrice) : def.price);
+      const changeVal = isXau ? 0.00 : (t ? parseFloat(t.priceChangePercent) : def.change);
+      const highVal = isXau ? 1.00 : (t ? parseFloat(t.highPrice) : (def.high || priceVal * 1.02));
+      const lowVal = isXau ? 1.00 : (t ? parseFloat(t.lowPrice) : (def.low || priceVal * 0.98));
+      const volVal = isXau ? 5000000000 : (t ? parseFloat(t.quoteVolume) : def.volVal);
 
       totalVolumeUSD += volVal;
       if (changeVal >= 0) gainersCount++;
@@ -593,7 +599,8 @@ app.get('/api/converter/rates', async (req, res) => {
       INR: 83.4,
       AED: 3.67,
       SAR: 3.75,
-      USDT: 1
+      USDT: 1,
+      XAU: 1
     };
 
     const cryptoPrices = {
@@ -602,10 +609,16 @@ app.get('/api/converter/rates', async (req, res) => {
       SOL: 148.25,
       XRP: 0.6241,
       DOGE: 0.1248,
-      USDT: 1.00
+      USDT: 1.00,
+      XAU: 1.00
     };
 
     defaultMarketCache.forEach(def => {
+      if (def.sym === 'XAU') {
+        rates.XAU = 1;
+        cryptoPrices.XAU = 1.00;
+        return;
+      }
       const t = cachedTickerData[def.symbol];
       const p = t ? parseFloat(t.lastPrice) : def.price;
       if (p > 0) {
@@ -616,7 +629,7 @@ app.get('/api/converter/rates', async (req, res) => {
 
     res.json({ success: true, rates, cryptoPrices });
   } catch (error) {
-    res.json({ success: true, rates: { USD: 1, USDT: 1 } });
+    res.json({ success: true, rates: { USD: 1, USDT: 1, XAU: 1 } });
   }
 });
 
@@ -626,6 +639,7 @@ app.get('/api/market/charts', async (req, res) => {
     const symbols = [
       { sym: 'BTC', name: 'Bitcoin (BTC)', symbol: 'BTCUSDT', base: 67420 },
       { sym: 'ETH', name: 'Ethereum (ETH)', symbol: 'ETHUSDT', base: 3512 },
+      { sym: 'XAU', name: 'Gold Tether (XAU)', symbol: 'XAUUSDT', base: 1.00 },
       { sym: 'SOL', name: 'Solana (SOL)', symbol: 'SOLUSDT', base: 148 },
       { sym: 'XRP', name: 'XRP', symbol: 'XRPUSDT', base: 0.62 },
       { sym: 'DOGE', name: 'Dogecoin (DOGE)', symbol: 'DOGEUSDT', base: 0.125 },
@@ -634,9 +648,10 @@ app.get('/api/market/charts', async (req, res) => {
     ];
 
     const chartResults = symbols.map(item => {
+      const isXau = item.sym === 'XAU';
       const t = cachedTickerData[item.symbol];
-      const lastP = t ? parseFloat(t.lastPrice) : item.base;
-      const changeP = t ? parseFloat(t.priceChangePercent) : 2.5;
+      const lastP = isXau ? 1.00 : (t ? parseFloat(t.lastPrice) : item.base);
+      const changeP = isXau ? 0.00 : (t ? parseFloat(t.priceChangePercent) : 2.5);
       const isUp = changeP >= 0;
 
       // Generate 24 data points for smooth line representation
@@ -644,8 +659,8 @@ app.get('/api/market/charts', async (req, res) => {
       let cur = lastP * (1 - (changeP / 100));
       const step = (lastP - cur) / 24;
       for (let i = 0; i < 24; i++) {
-        const noise = (Math.random() - 0.5) * (lastP * 0.01);
-        prices.push(parseFloat((cur + step * i + noise).toFixed(2)));
+        const noise = isXau ? 0 : (Math.random() - 0.5) * (lastP * 0.01);
+        prices.push(parseFloat((cur + step * i + noise).toFixed(isXau ? 4 : 2)));
       }
       prices.push(lastP);
 
@@ -2451,6 +2466,7 @@ app.get(['/api/user/wallet', '/api/wallet/data', '/api/wallet/summary'], async (
       },
       assets: [
         { name: 'Tether', symbol: 'USDT', balance: balance, inOrder: 0.00, usdValue: balance, btcValue: btcVal, icon: '₮' },
+        { name: 'Gold Tether (XAU)', symbol: 'XAU', balance: user.xauBalance || 0.00, inOrder: 0.00, usdValue: user.xauBalance || 0.00, btcValue: (user.xauBalance || 0) / 67420, icon: '🪙' },
         { name: 'Bitcoin', symbol: 'BTC', balance: 0.00, inOrder: 0.00, usdValue: 0.00, btcValue: 0.00, icon: '₿' },
         { name: 'Ethereum', symbol: 'ETH', balance: 0.00, inOrder: 0.00, usdValue: 0.00, btcValue: 0.00, icon: 'Ξ' },
         { name: 'Solana', symbol: 'SOL', balance: 0.00, inOrder: 0.00, usdValue: 0.00, btcValue: 0.00, icon: '◎' }

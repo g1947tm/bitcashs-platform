@@ -1487,6 +1487,7 @@ window.calcSwapResult = function () {
 
   const prices = {
     USDT: 1.00,
+    XAU: 1.00,
     BTC: 67420.50,
     ETH: 3512.80,
     SOL: 148.25,
@@ -1617,6 +1618,7 @@ window.changeSuitePair = function (sym) {
     if (amountSym) amountSym.textContent = sym;
 
     const basePrices = {
+      XAU: 1.00,
       BTC: 67420.50,
       ETH: 3512.80,
       SOL: 148.25,
@@ -1637,7 +1639,7 @@ window.changeSuitePair = function (sym) {
 
     const iframe = document.getElementById('tv-suite-iframe');
     if (iframe) {
-      const tvSym = `BINANCE:${sym}USDT`;
+      const tvSym = sym === 'XAU' ? 'TVC:GOLD' : `BINANCE:${sym}USDT`;
       iframe.src = `https://s.tradingview.com/widgetembed/?frameElementId=tradingview_widget&symbol=${tvSym}&interval=15&hidesidetoolbar=0&symboledit=1&saveimage=1&toolbarbg=141923&studies=%5B%5D&theme=dark&style=1&timezone=Etc%2FUTC&studies_overrides=%7B%7D&overrides=%7B%7D&enabled_features=%5B%5D&disabled_features=%5B%5D&locale=en`;
     }
   } catch (e) {
@@ -1845,6 +1847,7 @@ window.generate7dSparklineSVG = function (coinKey, isUp) {
 window.HOME_TARGET_COINS = [
   { sym: 'BTCUSDT', key: 'btc', name: 'Bitcoin', code: 'BTC', icon: '₿', defaultPrice: 67420.50, defaultChange: 2.45, defaultVol: '$28.4B' },
   { sym: 'ETHUSDT', key: 'eth', name: 'Ethereum', code: 'ETH', icon: 'Ξ', defaultPrice: 3512.80, defaultChange: 1.82, defaultVol: '$14.2B' },
+  { sym: 'XAUUSDT', key: 'xau', name: 'Gold Tether', code: 'XAU', icon: '🪙', defaultPrice: 1.00, defaultChange: 0.00, defaultVol: '$5.0B' },
   { sym: 'SOLUSDT', key: 'sol', name: 'Solana', code: 'SOL', icon: '◎', defaultPrice: 148.25, defaultChange: -3.12, defaultVol: '$3.8B' },
   { sym: 'XRPUSDT', key: 'xrp', name: 'XRP', code: 'XRP', icon: '✕', defaultPrice: 0.6241, defaultChange: 0.95, defaultVol: '$1.9B' },
   { sym: 'DOGEUSDT', key: 'doge', name: 'Dogecoin', code: 'DOGE', icon: 'Ð', defaultPrice: 0.1248, defaultChange: -1.45, defaultVol: '$980M' }
@@ -3499,6 +3502,7 @@ window.converterPriceMap = window.converterPriceMap || {
   XRP: 0.6241,
   DOGE: 0.1245,
   USDT: 1.0,
+  XAU: 1.0,
   USD: 1.0,
   EUR: 1.087,
   GBP: 1.266,
@@ -3525,8 +3529,14 @@ window.fetchConverterRates = async function () {
         }
       }
     }
+    // Strict 1:1 USD peg for XAU and USDT
+    window.converterPriceMap['XAU'] = 1.0;
+    window.converterPriceMap['USDT'] = 1.0;
+    window.converterPriceMap['USD'] = 1.0;
   } catch (err) {
     // Keep default rates
+    window.converterPriceMap['XAU'] = 1.0;
+    window.converterPriceMap['USDT'] = 1.0;
   }
 };
 
@@ -3602,6 +3612,7 @@ if (document.readyState === 'loading') {
 window.CHARTS_COINS = [
   { pair: 'BTC/USDT', sym: 'BTCUSDT', key: 'btc', name: 'Bitcoin', icon: '₿' },
   { pair: 'ETH/USDT', sym: 'ETHUSDT', key: 'eth', name: 'Ethereum', icon: 'Ξ' },
+  { pair: 'XAU/USDT', sym: 'XAUUSDT', key: 'xau', name: 'Gold Tether (XAU)', icon: '🪙' },
   { pair: 'SOL/USDT', sym: 'SOLUSDT', key: 'sol', name: 'Solana', icon: '◎' },
   { pair: 'XRP/USDT', sym: 'XRPUSDT', key: 'xrp', name: 'XRP', icon: '✕' },
   { pair: 'DOGE/USDT', sym: 'DOGEUSDT', key: 'doge', name: 'Dogecoin', icon: 'Ð' },
@@ -5116,6 +5127,7 @@ window.triggerBinarySettlement = async function (trade) {
 // CONVERTER & WALLET QUICK EXCHANGE SWAP CONTROLLER
 // ==========================================================================
 window.quickExchangeRates = {
+  XAU: 1.00,
   BTC: 67420.50,
   ETH: 3512.80,
   SOL: 148.25

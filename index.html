@@ -5,7 +5,9 @@
 
   <!-- CRITICAL GLOBAL AUTH MODAL HANDLERS (IMMEDIATE AVAILABILITY) -->
   <script>
-    window.API_BASE_URL = 'https://bitcashs-platform-production.up.railway.app';
+    window.API_BASE_URL = (typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' || window.location.port === '5000' || window.location.protocol === 'file:'))
+      ? 'http://localhost:5000'
+      : 'https://bitcashs-platform-production.up.railway.app';
 
     window.openLoginModal = function () {
       const overlay = document.getElementById('auth-modal-overlay');
@@ -3060,6 +3062,7 @@
                   style="width:100%; padding:9px 12px; background:rgba(8,8,8,0.8); border:1px solid rgba(234,179,8,0.3); border-radius:8px; color:#e2e8f0; font-size:12px;">
                   <option value="BTC">BTC/USDT — Bitcoin</option>
                   <option value="ETH">ETH/USDT — Ethereum</option>
+                  <option value="XAU">XAU/USDT — Gold (XAU) [1:1 USDT]</option>
                   <option value="SOL">SOL/USDT — Solana</option>
                   <option value="XRP">XRP/USDT — XRP</option>
                   <option value="DOGE">DOGE/USDT — Dogecoin</option>
@@ -3124,6 +3127,7 @@
                   <select id="swap-from"
                     style="flex:0 0 90px; padding:8px; background:rgba(8,8,8,0.8); border:1px solid rgba(234,179,8,0.3); border-radius:8px; color:#e2e8f0; font-size:12px;">
                     <option>USDT</option>
+                    <option>XAU</option>
                     <option>BTC</option>
                     <option>ETH</option>
                     <option>SOL</option>
@@ -3145,6 +3149,7 @@
                     <option>BTC</option>
                     <option>ETH</option>
                     <option>SOL</option>
+                    <option>XAU</option>
                     <option>USDT</option>
                   </select>
                   <input type="number" id="swap-to-val" placeholder="0.00" disabled
@@ -4393,6 +4398,7 @@
             style="width:100%; padding:13px; background:rgba(8,8,8,0.8); border:1px solid rgba(234,179,8,0.3); border-radius:10px; color:#facc15; font-size:14px; font-weight:600;">
             <option value="BTC" selected>BTC (Bitcoin)</option>
             <option value="ETH">ETH (Ethereum)</option>
+            <option value="XAU">XAU (Gold Tether - 1:1 USDT)</option>
             <option value="SOL">SOL (Solana)</option>
             <option value="XRP">XRP (XRP)</option>
             <option value="DOGE">DOGE (Dogecoin)</option>
@@ -4410,6 +4416,7 @@
             style="width:100%; padding:13px; background:rgba(8,8,8,0.8); border:1px solid rgba(234,179,8,0.3); border-radius:10px; color:#facc15; font-size:14px; font-weight:600;">
             <option value="BTC">BTC (Bitcoin)</option>
             <option value="ETH">ETH (Ethereum)</option>
+            <option value="XAU">XAU (Gold Tether - 1:1 USDT)</option>
             <option value="SOL">SOL (Solana)</option>
             <option value="XRP">XRP (XRP)</option>
             <option value="DOGE">DOGE (Dogecoin)</option>
@@ -5855,6 +5862,7 @@
             style="width:100%; padding:13px; background:rgba(8,8,8,0.8); border:1px solid rgba(234,179,8,0.3); border-radius:10px; color:#facc15; font-size:14px; font-weight:700;"
             onchange="updateWalletModalNetwork()">
             <option value="USDT">USDT (Tether USD)</option>
+            <option value="XAU">XAU (Gold Tether - 1:1 USDT)</option>
             <option value="BTC">BTC (Bitcoin)</option>
             <option value="ETH">ETH (Ethereum)</option>
             <option value="SOL">SOL (Solana)</option>
