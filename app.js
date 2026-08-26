@@ -808,8 +808,121 @@ window.updateInvestmentOverviewCards = function (source) {
 };
 
 // ==========================================================================
-// DYNAMIC WALLET DATA & TRANSACTION HISTORY FETCH
+// DYNAMIC WALLET DATA & MULTI-CURRENCY BALANCE DISPLAY CONTROLLER
 // ==========================================================================
+window.currentWalletCurrency = localStorage.getItem('bitcashs_wallet_currency') || 'USDT';
+window.latestUserBalance = 0;
+
+window.changeWalletDisplayCurrency = function (cur) {
+  if (!cur) cur = 'USDT';
+  cur = cur.toUpperCase();
+  window.currentWalletCurrency = cur;
+  localStorage.setItem('bitcashs_wallet_currency', cur);
+  window.updateWalletBalanceDisplay();
+};
+function changeWalletDisplayCurrency(cur) { window.changeWalletDisplayCurrency(cur); }
+
+window.updateWalletBalanceDisplay = function (bal) {
+  if (bal !== undefined && bal !== null && !isNaN(parseFloat(bal))) {
+    window.latestUserBalance = parseFloat(bal);
+  }
+  const balance = window.latestUserBalance || 0;
+  const cur = (localStorage.getItem('bitcashs_wallet_currency') || window.currentWalletCurrency || 'USDT').toUpperCase();
+
+  const selectEl = document.getElementById('wallet-currency-select');
+  if (selectEl && selectEl.value !== cur) {
+    selectEl.value = cur;
+  }
+
+  const balMainEl = document.getElementById('wallet-total-balance-usd');
+  const balSubEl = document.getElementById('wallet-total-balance-btc') || document.getElementById('wallet-total-balance-converted');
+
+  const defaultRates = {
+    BTC: 67420.50,
+    ETH: 3512.80,
+    SOL: 148.25,
+    XAU: 1.00,
+    USDT: 1.00,
+    USD: 1.00,
+    DOGE: 0.1248,
+    BNB: 575.20,
+    XRP: 0.6241,
+    ADA: 0.4850,
+    AVAX: 28.40,
+    DOT: 7.20,
+    LTC: 82.50,
+    NEAR: 5.45,
+    TRX: 0.155,
+    SHIB: 0.0000185
+  };
+
+  const getCoinPrice = (symbol) => {
+    symbol = (symbol || '').toUpperCase();
+    if (symbol === 'USDT' || symbol === 'USD' || symbol === 'XAU') return 1.00;
+    if (window.converterPriceMap && window.converterPriceMap[symbol] && window.converterPriceMap[symbol] > 0) {
+      return window.converterPriceMap[symbol];
+    }
+    const lowerKey = symbol.toLowerCase();
+    if (window.liveMarketPrices && window.liveMarketPrices[lowerKey] && window.liveMarketPrices[lowerKey].usd > 0) {
+      return window.liveMarketPrices[lowerKey].usd;
+    }
+    return defaultRates[symbol] || 1.00;
+  };
+
+  const formattedNum = balance.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+  if (balMainEl) {
+    if (cur === 'USDT') {
+      balMainEl.textContent = `$${formattedNum} USDT`;
+    } else if (cur === 'USD') {
+      balMainEl.textContent = `$${formattedNum} USD`;
+    } else if (cur === 'XAU') {
+      balMainEl.textContent = `$${formattedNum} (XAU)`;
+    } else {
+      balMainEl.textContent = `$${formattedNum}`;
+    }
+  }
+
+  if (balSubEl) {
+    const coinPrice = getCoinPrice(cur);
+    const btcPrice = getCoinPrice('BTC');
+
+    if (cur === 'USDT' || cur === 'USD') {
+      const btcVal = btcPrice > 0 ? (balance / btcPrice).toFixed(4) : '0.0000';
+      balSubEl.textContent = `1:1 USD Pegged Value • ≈ ${btcVal} BTC`;
+    } else if (cur === 'XAU') {
+      balSubEl.textContent = `≈ ${formattedNum} XAU (1 XAU = 1.00 USDT)`;
+    } else {
+      const coinVal = coinPrice > 0 ? (balance / coinPrice) : 0;
+      let coinValStr = '';
+      if (coinVal < 0.000001) {
+        coinValStr = coinVal.toFixed(8);
+      } else if (coinVal < 0.01) {
+        coinValStr = coinVal.toFixed(6);
+      } else if (coinVal < 10) {
+        coinValStr = coinVal.toFixed(4);
+      } else if (coinVal < 10000) {
+        coinValStr = coinVal.toFixed(2);
+      } else {
+        coinValStr = coinVal.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+      }
+
+      let priceStr = '';
+      if (coinPrice >= 1000) {
+        priceStr = '$' + coinPrice.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+      } else if (coinPrice >= 1) {
+        priceStr = '$' + coinPrice.toFixed(2);
+      } else if (coinPrice >= 0.0001) {
+        priceStr = '$' + coinPrice.toFixed(4);
+      } else {
+        priceStr = '$' + coinPrice.toFixed(8);
+      }
+
+      balSubEl.textContent = `≈ ${coinValStr} ${cur} (1 ${cur} ≈ ${priceStr})`;
+    }
+  }
+};
+
 window.fetchWalletData = async function () {
   const token = localStorage.getItem('token') || localStorage.getItem('bitcashs_token');
   const userJson = localStorage.getItem('user') || localStorage.getItem('bitcashs_user');
@@ -825,15 +938,7 @@ window.fetchWalletData = async function () {
   // 1. Initial immediate paint from cached user object to eliminate any lag or demo numbers
   if (localUser) {
     const bal = parseFloat(localUser.balance) || 0;
-    const btcPrice = (window.liveMarketPrices && window.liveMarketPrices['bitcoin']?.usd) || 64500.0;
-    const btcVal = (bal / btcPrice).toFixed(4);
-
-    const balUsdEl = document.getElementById('wallet-total-balance-usd');
-    const balBtcEl = document.getElementById('wallet-total-balance-btc');
-
-    if (balUsdEl) balUsdEl.textContent = `$${bal.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-    if (balBtcEl) balBtcEl.textContent = `≈ ${btcVal} BTC`;
-
+    window.updateWalletBalanceDisplay(bal);
     window.updateInvestmentOverviewCards(localUser);
   }
 
@@ -851,17 +956,13 @@ window.fetchWalletData = async function () {
 
     const w = data.wallet || {};
     const balance = parseFloat(data.balance !== undefined ? data.balance : w.totalBalanceUsd) || 0;
-    const btcPrice = (window.liveMarketPrices && window.liveMarketPrices['bitcoin']?.usd) || 64500.0;
-    const btcVal = (balance / btcPrice).toFixed(4);
 
     // Update Top Wallet Financial Cards
-    const balUsdEl = document.getElementById('wallet-total-balance-usd');
-    const balBtcEl = document.getElementById('wallet-total-balance-btc');
+    window.updateWalletBalanceDisplay(balance);
+
     const dailyEarnEl = document.getElementById('wallet-daily-earnings-usd');
     const totalProfitEl = document.getElementById('wallet-total-profit-usd');
 
-    if (balUsdEl) balUsdEl.textContent = `$${balance.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-    if (balBtcEl) balBtcEl.textContent = `≈ ${btcVal} BTC`;
     if (dailyEarnEl) dailyEarnEl.textContent = `+$${(parseFloat(w.dailyEarningsUsd) || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
     if (totalProfitEl) totalProfitEl.textContent = `+$${(parseFloat(w.totalProfitUsd) || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
@@ -1530,15 +1631,18 @@ window.changeLang = function () {
   const select = document.getElementById('lang-select');
   const lang = select ? select.value : 'en';
   const langNames = {
-    en: 'English',
-    ur: 'اردو (Urdu)',
-    ar: 'العربية (Arabic)',
-    hi: 'हिन्दी (Hindi)',
-    zh: '中文 (Chinese)',
-    es: 'Español',
-    fr: 'Français',
-    tr: 'Türkçe'
+    en: 'English (EN)',
+    es: 'Español (ES)',
+    fr: 'Français (FR)',
+    de: 'Deutsch (DE)',
+    ar: 'العربية (AR)',
+    zh: '中文 (ZH)',
+    ja: '日本語 (JA)',
+    ru: 'Русский (RU)',
+    pt: 'Português (PT)',
+    tr: 'Türkçe (TR)'
   };
+  localStorage.setItem('bitcashs_lang', lang);
   window.showTradeToast(`🌐 Language switched to ${langNames[lang] || lang}`, 'info');
 };
 
@@ -2715,15 +2819,7 @@ window.fetchWalletData = async function () {
   // 1. Initial immediate paint from cached user object to eliminate any lag or demo numbers
   if (localUser) {
     const bal = parseFloat(localUser.balance) || 0;
-    const btcPrice = (window.liveMarketPrices && window.liveMarketPrices['bitcoin']?.usd) || 64500.0;
-    const btcVal = (bal / btcPrice).toFixed(4);
-
-    const balUsdEl = document.getElementById('wallet-total-balance-usd');
-    const balBtcEl = document.getElementById('wallet-total-balance-btc');
-
-    if (balUsdEl) balUsdEl.textContent = `$${bal.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-    if (balBtcEl) balBtcEl.textContent = `≈ ${btcVal} BTC`;
-
+    window.updateWalletBalanceDisplay(bal);
     if (typeof window.updateInvestmentOverviewCards === 'function') {
       window.updateInvestmentOverviewCards(localUser);
     }
@@ -2743,17 +2839,13 @@ window.fetchWalletData = async function () {
 
     const w = data.wallet || {};
     const balance = parseFloat(data.balance !== undefined ? data.balance : w.totalBalanceUsd) || 0;
-    const btcPrice = (window.liveMarketPrices && window.liveMarketPrices['bitcoin']?.usd) || 64500.0;
-    const btcVal = (balance / btcPrice).toFixed(4);
 
     // Update Top Wallet Financial Cards
-    const balUsdEl = document.getElementById('wallet-total-balance-usd');
-    const balBtcEl = document.getElementById('wallet-total-balance-btc');
+    window.updateWalletBalanceDisplay(balance);
+
     const dailyEarnEl = document.getElementById('wallet-daily-earnings-usd');
     const totalProfitEl = document.getElementById('wallet-total-profit-usd');
 
-    if (balUsdEl) balUsdEl.textContent = `$${balance.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-    if (balBtcEl) balBtcEl.textContent = `≈ ${btcVal} BTC`;
     if (dailyEarnEl) dailyEarnEl.textContent = `+$${(parseFloat(w.dailyEarningsUsd) || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
     if (totalProfitEl) totalProfitEl.textContent = `+$${(parseFloat(w.totalProfitUsd) || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
@@ -3455,6 +3547,13 @@ document.addEventListener('DOMContentLoaded', function () {
   try {
     updateAuthUI();
 
+    // 0. Restore persistent language preference
+    const savedLang = localStorage.getItem('bitcashs_lang');
+    const langSelect = document.getElementById('lang-select');
+    if (savedLang && langSelect) {
+      langSelect.value = savedLang;
+    }
+
     // 1. Check referral code parameter in URL
     const urlParams = new URLSearchParams(window.location.search);
     const refCode = urlParams.get('ref');
@@ -3501,6 +3600,14 @@ window.converterPriceMap = window.converterPriceMap || {
   SOL: 148.25,
   XRP: 0.6241,
   DOGE: 0.1245,
+  BNB: 575.20,
+  ADA: 0.4850,
+  AVAX: 28.40,
+  DOT: 7.20,
+  LTC: 82.50,
+  NEAR: 5.45,
+  TRX: 0.155,
+  SHIB: 0.0000185,
   USDT: 1.0,
   XAU: 1.0,
   USD: 1.0,

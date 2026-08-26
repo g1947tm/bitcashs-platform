@@ -435,7 +435,8 @@ const defaultMarketCache = [
   { sym: 'BNB', name: 'BNB', symbol: 'BNBUSDT', icon: '🔶', baseCap: 87000000000, price: 575.20, change: 0.85, high: 582.00, low: 568.00, volVal: 1400000000 },
   { sym: 'LINK', name: 'Chainlink', symbol: 'LINKUSDT', icon: '⬡', baseCap: 9400000000, price: 14.80, change: -1.10, high: 15.20, low: 14.40, volVal: 340000000 },
   { sym: 'MATIC', name: 'Polygon', symbol: 'MATICUSDT', icon: '💜', baseCap: 5100000000, price: 0.52, change: 0.60, high: 0.54, low: 0.50, volVal: 280000000 },
-  { sym: 'TRX', name: 'TRON', symbol: 'TRXUSDT', icon: '🔴', baseCap: 11200000000, price: 0.155, change: 0.35, high: 0.158, low: 0.152, volVal: 460000000 }
+  { sym: 'TRX', name: 'TRON', symbol: 'TRXUSDT', icon: '🔴', baseCap: 11200000000, price: 0.155, change: 0.35, high: 0.158, low: 0.152, volVal: 460000000 },
+  { sym: 'SHIB', name: 'Shiba Inu', symbol: 'SHIBUSDT', icon: '🐕', baseCap: 11000000000, price: 0.0000185, change: 1.10, high: 0.0000192, low: 0.0000178, volVal: 410000000 }
 ];
 
 let cachedTickerData = {};

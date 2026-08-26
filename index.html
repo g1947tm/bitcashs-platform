@@ -90,6 +90,25 @@
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     }
 
+    #wallet-currency-select {
+      background: #131722 !important;
+      color: #f8fafc !important;
+      border: 1px solid #334155 !important;
+      outline: none !important;
+    }
+    #wallet-currency-select:hover,
+    #wallet-currency-select:focus {
+      border-color: #eab308 !important;
+      box-shadow: 0 0 0 2px rgba(234, 179, 8, 0.2) !important;
+    }
+    #wallet-currency-select option {
+      background-color: #131722 !important;
+      color: #f8fafc !important;
+      padding: 8px 12px !important;
+      font-size: 12px !important;
+      font-weight: 700 !important;
+    }
+
     body {
       background: linear-gradient(135deg, #050505 0%, #161616 40%, #050505 100%);
       background-attachment: fixed;
@@ -563,18 +582,31 @@
     }
 
     .lang-select {
-      background: rgba(20, 20, 20, 0.7);
-      border: 1px solid rgba(234, 179, 8, 0.3);
-      color: #e2e8f0;
-      font-size: 13px;
-      padding: 7px 10px;
-      border-radius: 6px;
+      background: #131722;
+      border: 1px solid #334155;
+      color: #f8fafc;
+      font-size: 12px;
+      font-weight: 700;
+      padding: 7px 12px;
+      border-radius: 8px;
       cursor: pointer;
       outline: none;
+      transition: all 0.2s ease;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
     }
 
-    .lang-select:hover {
+    .lang-select:hover,
+    .lang-select:focus {
       border-color: #eab308;
+      box-shadow: 0 0 0 2px rgba(234, 179, 8, 0.2);
+    }
+
+    .lang-select option {
+      background-color: #131722;
+      color: #f8fafc;
+      padding: 8px 12px;
+      font-size: 12px;
+      font-weight: 700;
     }
 
     /* ========== CONVERTER ========== */
@@ -2428,15 +2460,17 @@
       <a href="javascript:void(0)" id="nav-contact" class="nav-link" onclick="showPage('contact')">Contact</a>
     </nav>
     <div class="header-right">
-      <select class="lang-select" id="lang-select" onchange="changeLang()">
-        <option value="en">🌐 English</option>
-        <option value="ur">🇵🇰 اردو (Urdu)</option>
-        <option value="ar">🇸🇦 العربية (Arabic)</option>
-        <option value="hi">🇮🇳 हिन्दी (Hindi)</option>
-        <option value="zh">🇨🇳 中文 (Chinese)</option>
-        <option value="es">🇪🇸 Español</option>
-        <option value="fr">🇫🇷 Français</option>
-        <option value="tr">🇹🇷 Türkçe</option>
+      <select class="lang-select" id="lang-select" onchange="changeLang()" title="Select Language">
+        <option value="en" selected>🌐 EN English</option>
+        <option value="es">🇪🇸 ES Español</option>
+        <option value="fr">🇫🇷 FR Français</option>
+        <option value="de">🇩🇪 DE Deutsch</option>
+        <option value="ar">🇸🇦 AR العربية</option>
+        <option value="zh">🇨🇳 ZH 中文</option>
+        <option value="ja">🇯🇵 JA 日本語</option>
+        <option value="ru">🇷🇺 RU Русский</option>
+        <option value="pt">🇵🇹 PT Português</option>
+        <option value="tr">🇹🇷 TR Türkçe</option>
       </select>
       <div id="auth-header-actions" style="display: inline-flex; gap: 8px; align-items: center;">
         <button class="btn btn-outline" onclick="openLoginModal()">Log In</button>
@@ -3346,13 +3380,32 @@
             <span
               style="font-size:11px; font-weight:800; color:#94a3b8; letter-spacing:1px; text-transform:uppercase;">TOTAL
               BALANCE</span>
-            <a onclick="showTradeToast('Showing asset holdings breakdown', 'info')"
-              style="font-size:11px; font-weight:800; color:#facc15; cursor:pointer; text-decoration:none; letter-spacing:0.5px;">VIEW
-              DETAILS &gt;</a>
+            <div style="display:flex; align-items:center; gap:8px;">
+              <select id="wallet-currency-select" onchange="changeWalletDisplayCurrency(this.value)"
+                style="background:#131722; border:1px solid #334155; border-radius:8px; color:#f8fafc; font-size:12px; font-weight:700; padding:6px 10px; cursor:pointer; outline:none; transition:all 0.2s ease; box-shadow:0 2px 6px rgba(0,0,0,0.3);"
+                title="Select Display Currency">
+                <option value="USDT" style="background:#131722; color:#f8fafc; font-weight:700;">USDT (Tether USD)</option>
+                <option value="USD" style="background:#131722; color:#f8fafc; font-weight:700;">USD (US Dollar)</option>
+                <option value="BTC" style="background:#131722; color:#f8fafc; font-weight:700;">BTC (Bitcoin)</option>
+                <option value="ETH" style="background:#131722; color:#f8fafc; font-weight:700;">ETH (Ethereum)</option>
+                <option value="SOL" style="background:#131722; color:#f8fafc; font-weight:700;">SOL (Solana)</option>
+                <option value="XAU" style="background:#131722; color:#f8fafc; font-weight:700;">XAU (Gold Tether - 1:1 USDT)</option>
+                <option value="DOGE" style="background:#131722; color:#f8fafc; font-weight:700;">DOGE (Dogecoin)</option>
+                <option value="BNB" style="background:#131722; color:#f8fafc; font-weight:700;">BNB (BNB)</option>
+                <option value="XRP" style="background:#131722; color:#f8fafc; font-weight:700;">XRP (Ripple)</option>
+                <option value="ADA" style="background:#131722; color:#f8fafc; font-weight:700;">ADA (Cardano)</option>
+                <option value="AVAX" style="background:#131722; color:#f8fafc; font-weight:700;">AVAX (Avalanche)</option>
+                <option value="DOT" style="background:#131722; color:#f8fafc; font-weight:700;">DOT (Polkadot)</option>
+                <option value="LTC" style="background:#131722; color:#f8fafc; font-weight:700;">LTC (Litecoin)</option>
+                <option value="NEAR" style="background:#131722; color:#f8fafc; font-weight:700;">NEAR (NEAR Protocol)</option>
+                <option value="TRX" style="background:#131722; color:#f8fafc; font-weight:700;">TRX (TRON)</option>
+                <option value="SHIB" style="background:#131722; color:#f8fafc; font-weight:700;">SHIB (Shiba Inu)</option>
+              </select>
+            </div>
           </div>
           <div id="wallet-total-balance-usd"
             style="font-size:34px; font-weight:800; color:#facc15; margin-bottom:4px; font-family:monospace; letter-spacing:-0.5px;">
-            $0.00</div>
+            $0.00 USDT</div>
           <div id="wallet-total-balance-btc" style="font-size:13px; font-weight:600; color:#94a3b8;">≈ 0.0000 BTC</div>
         </div>
 
