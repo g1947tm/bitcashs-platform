@@ -1,6 +1,6 @@
 window.API_BASE_URL = (typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' || window.location.port === '5000' || window.location.protocol === 'file:'))
   ? 'http://localhost:5000'
-  : 'https://bitcashs-platform-production.up.railway.app';
+  : 'https://bitcashs-platform-production-ba9b.up.railway.app';
 // ==========================================================================
 // MARKETS PAGE CONTROLLERS & REAL-TIME TABLE RENDERER
 // ==========================================================================
@@ -35,7 +35,7 @@ function toggleFavoriteMarket(pair, event) { window.toggleFavoriteMarket(pair, e
 
 window.fetchMarketsData = async function () {
   try {
-    const apiUrl = 'https://bitcashs-platform-production.up.railway.app/api/markets';
+    const apiUrl = 'https://bitcashs-platform-production-ba9b.up.railway.app/api/markets';
     const res = await fetch(apiUrl);
     if (!res.ok) return;
     const data = await res.json();
