@@ -4,7 +4,7 @@
   "rewrites": [
     {
       "source": "/api/(.*)",
-      "destination": "https://bitcashs-platform-production.up.railway.app/api/$1"
+      "destination": "https://bitcashs-platform-production-ba9b.up.railway.app/api/$1"
     },
     {
       "source": "/(.*)",
